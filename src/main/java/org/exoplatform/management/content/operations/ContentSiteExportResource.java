@@ -24,8 +24,6 @@ package org.exoplatform.management.content.operations;
 
 import java.util.Collection;
 
-import javax.jcr.Session;
-
 import org.exoplatform.services.jcr.RepositoryService;
 import org.exoplatform.services.wcm.core.NodeLocation;
 import org.exoplatform.services.wcm.core.WCMConfigurationService;
@@ -35,6 +33,7 @@ import org.gatein.management.api.operation.OperationContext;
 import org.gatein.management.api.operation.OperationHandler;
 import org.gatein.management.api.operation.OperationNames;
 import org.gatein.management.api.operation.ResultHandler;
+import org.gatein.management.api.operation.model.ExportResourceModel;
 
 /**
  * @author <a href="mailto:thomas.delhomenie@exoplatform.com">Thomas
@@ -56,18 +55,22 @@ public class ContentSiteExportResource implements OperationHandler {
 
       WCMConfigurationService wcmConfigurationService = operationContext.getRuntimeContext().getRuntimeComponent(
           WCMConfigurationService.class);
-      RepositoryService repositoryService = operationContext.getRuntimeContext().getRuntimeComponent(RepositoryService.class);
       Collection<NodeLocation> sitesLocations = wcmConfigurationService.getAllLivePortalsLocation();
       if (sitesLocations == null || sitesLocations.size() != 1) {
         throw new OperationException(operationName,
             "Unable to read site locations, expected one slocation config, site location config found = " + sitesLocations);
       }
       NodeLocation sitesLocation = sitesLocations.iterator().next();
+      String path = sitesLocation.getPath();
+      if(!path.endsWith("/")) {
+        path += "/";
+      }
+      path += siteName;
 
-//      Session session = repositoryService.getCurrentRepository().getSystemSession(sitesLocation.getWorkspace());
-//      session.exportSystemView(absPath, contentHandler, skipBinary, noRecurse);
-//
-//      resultHandler.completed(new ReadResourceModel("Available contents sites.", contentsSites));
+      RepositoryService repositoryService = operationContext.getRuntimeContext().getRuntimeComponent(RepositoryService.class);
+      SiteContentExportTask exportTask = new SiteContentExportTask(repositoryService, sitesLocation.getWorkspace(), path);
+
+      resultHandler.completed(new ExportResourceModel(exportTask));
     } catch (Exception e) {
       throw new OperationException(OperationNames.EXPORT_RESOURCE, "Unable to retrieve the list of the contents sites : "
           + e.getMessage());
