@@ -70,6 +70,7 @@ public class ContentSiteExportResource implements OperationHandler {
     if (!path.endsWith("/")) {
       path += "/";
     }
+    String sitesParentPath = path;
     path += siteName;
 
     metaData.getOptions().put(SiteMetaData.SITE_PATH, path);
@@ -78,7 +79,7 @@ public class ContentSiteExportResource implements OperationHandler {
 
     RepositoryService repositoryService = operationContext.getRuntimeContext().getRuntimeComponent(RepositoryService.class);
     SiteContentExportTask exportTask = new SiteContentExportTask(repositoryService, sitesLocation.getWorkspace(), path);
-    metaData.getJcrExportedFiles().put(exportTask.getEntry(), path);
+    metaData.getJcrExportedFiles().put(exportTask.getEntry(), sitesParentPath);
 
     exportTasks.add(exportTask);
     return exportTasks;
