@@ -50,7 +50,7 @@ public class SiteContentExportTask implements ExportTask {
 
   @Override
   public String getEntry() {
-    return "sysview.xml";
+    return "contents-sysview" + absolutePath;
   }
 
   @Override
