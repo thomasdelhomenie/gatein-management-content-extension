@@ -1,25 +1,3 @@
-/*
- * JBoss, Home of Professional Open Source.
- * Copyright 2011, Red Hat, Inc., and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
- *
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
- */
-
 package org.exoplatform.management.content.operations;
 
 import java.util.ArrayList;
@@ -31,7 +9,14 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 
+import org.exoplatform.commons.utils.LazyPageList;
+import org.exoplatform.portal.config.DataStorage;
+import org.exoplatform.portal.config.Query;
+import org.exoplatform.portal.config.model.Page;
+import org.exoplatform.portal.mop.SiteType;
 import org.exoplatform.services.jcr.RepositoryService;
+import org.exoplatform.services.seo.PageMetadataModel;
+import org.exoplatform.services.seo.SEOService;
 import org.exoplatform.services.wcm.core.NodeLocation;
 import org.exoplatform.services.wcm.core.WCMConfigurationService;
 import org.exoplatform.services.wcm.portal.PortalFolderSchemaHandler;
@@ -46,14 +31,18 @@ import org.gatein.management.api.operation.model.ExportResourceModel;
 import org.gatein.management.api.operation.model.ExportTask;
 
 /**
- * @author <a href="mailto:thomas.delhomenie@exoplatform.com">Thomas Delhoménie</a>
+ * @author <a href="mailto:thomas.delhomenie@exoplatform.com">Thomas
+ *         Delhoménie</a>
  * @version $Revision$
  */
 public class ContentSiteExportResource implements OperationHandler {
 
+	private SiteMetaData metaData = null;
+
 	@Override
 	public void execute(OperationContext operationContext, ResultHandler resultHandler) throws OperationException {
 		try {
+			metaData = new SiteMetaData();
 			String operationName = operationContext.getOperationName();
 			PathAddress address = operationContext.getAddress();
 			OperationAttributes attributes = operationContext.getAttributes();
@@ -66,15 +55,19 @@ public class ContentSiteExportResource implements OperationHandler {
 			WCMConfigurationService wcmConfigurationService = operationContext.getRuntimeContext().getRuntimeComponent(WCMConfigurationService.class);
 			Collection<NodeLocation> sitesLocations = wcmConfigurationService.getAllLivePortalsLocation();
 			if (sitesLocations == null || sitesLocations.size() != 1) {
-				throw new OperationException(operationName,
-						"Unable to read site locations, expected one slocation config, site location config found = " + sitesLocations);
+				throw new OperationException(operationName, "Unable to read site locations, expected one slocation config, site location config found = "
+						+ sitesLocations);
 			}
 			NodeLocation sitesLocation = sitesLocations.iterator().next();
-			String siteRootNodePath = sitesLocation.getPath();
-			if (!siteRootNodePath.endsWith("/")) {
-				siteRootNodePath += "/";
+			String sitePath = sitesLocation.getPath();
+			if (!sitePath.endsWith("/")) {
+				sitePath += "/";
 			}
-			siteRootNodePath += siteName;
+			sitePath += siteName;
+
+			metaData.getOptions().put(SiteMetaData.SITE_PATH, sitePath);
+			metaData.getOptions().put(SiteMetaData.SITE_WORKSPACE, sitesLocation.getWorkspace());
+			metaData.getOptions().put(SiteMetaData.SITE_NAME, siteName);
 
 			List<ExportTask> exportTasks = new ArrayList<ExportTask>();
 
@@ -82,10 +75,13 @@ public class ContentSiteExportResource implements OperationHandler {
 
 			boolean exportWholeSite = attributes.getValues("filter").contains("scope:all");
 			if (!exportWholeSite) {
-				exportTasks.addAll(exportSiteWithoutSkeleton(sitesLocation, siteRootNodePath, repositoryService));
+				exportTasks.addAll(exportSiteWithoutSkeleton(sitesLocation, sitePath, repositoryService));
 			} else {
-				exportTasks.addAll(exportSite(sitesLocation, siteRootNodePath, repositoryService));
+				exportTasks.addAll(exportSite(sitesLocation, sitePath, repositoryService));
 			}
+
+			exportTasks.add(getSEOExportTask(operationContext, siteName));
+			exportTasks.add(getMetaDataExportTask());
 
 			resultHandler.completed(new ExportResourceModel(exportTasks));
 		} catch (Exception e) {
@@ -101,7 +97,12 @@ public class ContentSiteExportResource implements OperationHandler {
 	 */
 	private List<ExportTask> exportSite(NodeLocation sitesLocation, String siteRootNodePath, RepositoryService repositoryService) {
 		List<ExportTask> exportTasks = new ArrayList<ExportTask>();
-		exportTasks.add(new SiteContentExportTask(repositoryService, sitesLocation.getWorkspace(), siteRootNodePath));
+		
+		SiteContentExportTask siteContentExportTask = new SiteContentExportTask(repositoryService, sitesLocation.getWorkspace(), siteRootNodePath);
+		exportTasks.add(siteContentExportTask);
+
+		metaData.getExportedFiles().put(siteContentExportTask.getEntry(), sitesLocation.getPath());
+		
 		return exportTasks;
 	}
 
@@ -113,8 +114,8 @@ public class ContentSiteExportResource implements OperationHandler {
 	 * @throws Exception
 	 * @throws RepositoryException
 	 */
-	private List<ExportTask> exportSiteWithoutSkeleton(NodeLocation sitesLocation, String path, RepositoryService repositoryService)
-			throws Exception, RepositoryException {
+	private List<ExportTask> exportSiteWithoutSkeleton(NodeLocation sitesLocation, String path, RepositoryService repositoryService) throws Exception,
+			RepositoryException {
 
 		List<ExportTask> exportTasks = new ArrayList<ExportTask>();
 
@@ -159,13 +160,13 @@ public class ContentSiteExportResource implements OperationHandler {
 		// Categories Folder
 		Node categoriesNode = portalNode.getNode("categories");
 		exportTasks.addAll(exportSubNodes(repositoryService, sitesLocation.getWorkspace(), categoriesNode, null));
-		
+
 		return exportTasks;
 	}
 
-	
 	/**
 	 * Export all sub-nodes of the given node
+	 * 
 	 * @param repositoryService
 	 * @param workspace
 	 * @param parentNode
@@ -182,10 +183,33 @@ public class ContentSiteExportResource implements OperationHandler {
 		while (childrenNodes.hasNext()) {
 			Node childNode = (Node) childrenNodes.next();
 			if (excludedNodes == null || !excludedNodes.contains(childNode.getName())) {
-				subNodesExportTask.add(new SiteContentExportTask(repositoryService, workspace, childNode.getPath()));
+				SiteContentExportTask siteContentExportTask = new SiteContentExportTask(repositoryService, workspace, childNode.getPath());
+				subNodesExportTask.add(siteContentExportTask);
+				metaData.getExportedFiles().put(siteContentExportTask.getEntry(), parentNode.getPath());
 			}
 		}
 
 		return subNodesExportTask;
+	}
+
+	@SuppressWarnings("unused")
+	private SiteSEOExportTask getSEOExportTask(OperationContext operationContext, String siteName) throws Exception {
+		DataStorage dataStorage = operationContext.getRuntimeContext().getRuntimeComponent(DataStorage.class);
+		LazyPageList<Page> pagLazyList = dataStorage.find(new Query<Page>(SiteType.PORTAL.getName(), siteName, Page.class));
+		SEOService seoService = operationContext.getRuntimeContext().getRuntimeComponent(SEOService.class);
+		List<Page> pageList = pagLazyList.getAll();
+		List<PageMetadataModel> pageMetadataModels = new ArrayList<PageMetadataModel>();
+		for (Page page : pageList) {
+			PageMetadataModel pageMetadataModel = null;// seoService.getPageMetadata(page.getPageId());
+			if (pageMetadataModel != null && pageMetadataModel.getKeywords() != null && !pageMetadataModel.getKeywords().isEmpty()) {
+				pageMetadataModels.add(pageMetadataModel);
+			}
+		}
+
+		return new SiteSEOExportTask(pageMetadataModels);
+	}
+
+	private SiteMetaDataExportTask getMetaDataExportTask() {
+		return new SiteMetaDataExportTask(metaData);
 	}
 }
