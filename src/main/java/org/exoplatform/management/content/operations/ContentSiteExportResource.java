@@ -73,20 +73,54 @@ public class ContentSiteExportResource implements OperationHandler {
 
 			RepositoryService repositoryService = operationContext.getRuntimeContext().getRuntimeComponent(RepositoryService.class);
 
-			boolean exportWholeSite = attributes.getValues("filter").contains("scope:all");
-			if (!exportWholeSite) {
-				exportTasks.addAll(exportSiteWithoutSkeleton(sitesLocation, sitePath, repositoryService));
-			} else {
-				exportTasks.addAll(exportSite(sitesLocation, sitePath, repositoryService));
+			List<String> filters = attributes.getValues("filter");
+			
+			// scope filter
+			List<String> scopes = getScopes(filters);
+			boolean exportAll = scopes.isEmpty() || scopes.contains("all");
+			boolean exportSiteContents = exportAll || scopes.contains("site-contents");
+			boolean exportSEO = exportAll || scopes.contains("seo");
+			
+			boolean exportSiteWithSkeleton = !filters.contains("no-skeleton:true");
+			
+			// Site contents
+			if(exportSiteContents) {
+				if (exportSiteWithSkeleton) {
+					exportTasks.addAll(exportSite(sitesLocation, sitePath, repositoryService));
+				} else {
+					exportTasks.addAll(exportSiteWithoutSkeleton(sitesLocation, sitePath, repositoryService));
+				}
 			}
-
-			exportTasks.add(getSEOExportTask(operationContext, siteName));
+			
+			// SEO metadata on pages
+			if(exportSEO) {
+				exportTasks.add(getSEOExportTask(operationContext, siteName));
+			}
+			
+			// Metadata
 			exportTasks.add(getMetaDataExportTask());
 
 			resultHandler.completed(new ExportResourceModel(exportTasks));
 		} catch (Exception e) {
 			throw new OperationException(OperationNames.EXPORT_RESOURCE, "Unable to retrieve the list of the contents sites : " + e.getMessage());
 		}
+	}
+
+	/**
+	 * Extract scopes from the command filters
+	 * @param filters filters
+	 * @return List of scopes
+	 */
+	private List<String> getScopes(List<String> filters) {
+		List<String> scopes = new ArrayList<String>();
+		for(String filter : filters) {
+			if(filter.startsWith("scope:")) {
+				String[] scopesArray = filter.substring("scope:".length()).split(",");
+				scopes = Arrays.asList(scopesArray);
+				break;
+			}
+		}
+		return scopes;
 	}
 
 	/**
@@ -151,7 +185,7 @@ public class ContentSiteExportResource implements OperationHandler {
 
 		// WebContent Folder
 		exportTasks.addAll(exportSubNodes(repositoryService, sitesLocation.getWorkspace(), portalFolderSchemaHandler.getWebContentStorage(portalNode),
-				Arrays.asList("site-artifacts")));
+				Arrays.asList("site artifacts")));
 
 		// Site Artifacts Folder
 		Node webContentNode = portalFolderSchemaHandler.getWebContentStorage(portalNode);
