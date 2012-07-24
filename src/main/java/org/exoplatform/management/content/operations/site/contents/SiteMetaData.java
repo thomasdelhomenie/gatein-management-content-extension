@@ -1,4 +1,4 @@
-package org.exoplatform.management.content.operations;
+package org.exoplatform.management.content.operations.site.contents;
 
 import java.util.HashMap;
 import java.util.Map;

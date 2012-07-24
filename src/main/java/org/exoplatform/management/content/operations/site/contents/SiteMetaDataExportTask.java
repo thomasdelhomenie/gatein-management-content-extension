@@ -1,4 +1,4 @@
-package org.exoplatform.management.content.operations;
+package org.exoplatform.management.content.operations.site.contents;
 
 import java.io.IOException;
 import java.io.OutputStream;

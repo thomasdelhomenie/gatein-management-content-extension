@@ -1,4 +1,4 @@
-package org.exoplatform.management.content.operations;
+package org.exoplatform.management.content.operations.site.contents;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,14 +9,7 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 
-import org.exoplatform.commons.utils.LazyPageList;
-import org.exoplatform.portal.config.DataStorage;
-import org.exoplatform.portal.config.Query;
-import org.exoplatform.portal.config.model.Page;
-import org.exoplatform.portal.mop.SiteType;
 import org.exoplatform.services.jcr.RepositoryService;
-import org.exoplatform.services.seo.PageMetadataModel;
-import org.exoplatform.services.seo.SEOService;
 import org.exoplatform.services.wcm.core.NodeLocation;
 import org.exoplatform.services.wcm.core.WCMConfigurationService;
 import org.exoplatform.services.wcm.portal.PortalFolderSchemaHandler;
@@ -35,7 +28,7 @@ import org.gatein.management.api.operation.model.ExportTask;
  *         Delhoménie</a>
  * @version $Revision$
  */
-public class ContentSiteExportResource implements OperationHandler {
+public class SiteContentsExportResource implements OperationHandler {
 
 	private SiteMetaData metaData = null;
 
@@ -75,26 +68,13 @@ public class ContentSiteExportResource implements OperationHandler {
 
 			List<String> filters = attributes.getValues("filter");
 			
-			// scope filter
-			List<String> scopes = getScopes(filters);
-			boolean exportAll = scopes.isEmpty() || scopes.contains("all");
-			boolean exportSiteContents = exportAll || scopes.contains("site-contents");
-			boolean exportSEO = exportAll || scopes.contains("seo");
-			
 			boolean exportSiteWithSkeleton = !filters.contains("no-skeleton:true");
 			
 			// Site contents
-			if(exportSiteContents) {
-				if (exportSiteWithSkeleton) {
-					exportTasks.addAll(exportSite(sitesLocation, sitePath, repositoryService));
-				} else {
-					exportTasks.addAll(exportSiteWithoutSkeleton(sitesLocation, sitePath, repositoryService));
-				}
-			}
-			
-			// SEO metadata on pages
-			if(exportSEO) {
-				exportTasks.add(getSEOExportTask(operationContext, siteName));
+			if (exportSiteWithSkeleton) {
+				exportTasks.addAll(exportSite(sitesLocation, sitePath, repositoryService));
+			} else {
+				exportTasks.addAll(exportSiteWithoutSkeleton(sitesLocation, sitePath, repositoryService));
 			}
 			
 			// Metadata
@@ -107,23 +87,6 @@ public class ContentSiteExportResource implements OperationHandler {
 	}
 
 	/**
-	 * Extract scopes from the command filters
-	 * @param filters filters
-	 * @return List of scopes
-	 */
-	private List<String> getScopes(List<String> filters) {
-		List<String> scopes = new ArrayList<String>();
-		for(String filter : filters) {
-			if(filter.startsWith("scope:")) {
-				String[] scopesArray = filter.substring("scope:".length()).split(",");
-				scopes = Arrays.asList(scopesArray);
-				break;
-			}
-		}
-		return scopes;
-	}
-
-	/**
 	 * @param sitesLocation
 	 * @param siteRootNodePath
 	 * @param exportTasks
@@ -132,7 +95,7 @@ public class ContentSiteExportResource implements OperationHandler {
 	private List<ExportTask> exportSite(NodeLocation sitesLocation, String siteRootNodePath, RepositoryService repositoryService) {
 		List<ExportTask> exportTasks = new ArrayList<ExportTask>();
 		
-		SiteContentExportTask siteContentExportTask = new SiteContentExportTask(repositoryService, sitesLocation.getWorkspace(), siteRootNodePath);
+		SiteContentsExportTask siteContentExportTask = new SiteContentsExportTask(repositoryService, sitesLocation.getWorkspace(), siteRootNodePath);
 		exportTasks.add(siteContentExportTask);
 
 		metaData.getExportedFiles().put(siteContentExportTask.getEntry(), sitesLocation.getPath());
@@ -217,30 +180,13 @@ public class ContentSiteExportResource implements OperationHandler {
 		while (childrenNodes.hasNext()) {
 			Node childNode = (Node) childrenNodes.next();
 			if (excludedNodes == null || !excludedNodes.contains(childNode.getName())) {
-				SiteContentExportTask siteContentExportTask = new SiteContentExportTask(repositoryService, workspace, childNode.getPath());
+				SiteContentsExportTask siteContentExportTask = new SiteContentsExportTask(repositoryService, workspace, childNode.getPath());
 				subNodesExportTask.add(siteContentExportTask);
 				metaData.getExportedFiles().put(siteContentExportTask.getEntry(), parentNode.getPath());
 			}
 		}
 
 		return subNodesExportTask;
-	}
-
-	@SuppressWarnings("unused")
-	private SiteSEOExportTask getSEOExportTask(OperationContext operationContext, String siteName) throws Exception {
-		DataStorage dataStorage = operationContext.getRuntimeContext().getRuntimeComponent(DataStorage.class);
-		LazyPageList<Page> pagLazyList = dataStorage.find(new Query<Page>(SiteType.PORTAL.getName(), siteName, Page.class));
-		SEOService seoService = operationContext.getRuntimeContext().getRuntimeComponent(SEOService.class);
-		List<Page> pageList = pagLazyList.getAll();
-		List<PageMetadataModel> pageMetadataModels = new ArrayList<PageMetadataModel>();
-		for (Page page : pageList) {
-			PageMetadataModel pageMetadataModel = null;// seoService.getPageMetadata(page.getPageId());
-			if (pageMetadataModel != null && pageMetadataModel.getKeywords() != null && !pageMetadataModel.getKeywords().isEmpty()) {
-				pageMetadataModels.add(pageMetadataModel);
-			}
-		}
-
-		return new SiteSEOExportTask(pageMetadataModels);
 	}
 
 	private SiteMetaDataExportTask getMetaDataExportTask() {

@@ -1,4 +1,4 @@
-package org.exoplatform.management.content.operations;
+package org.exoplatform.management.content.operations.site.seo;
 
 import java.io.IOException;
 import java.io.OutputStream;

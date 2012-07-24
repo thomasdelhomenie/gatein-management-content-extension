@@ -1,4 +1,4 @@
-package org.exoplatform.management.content.operations;
+package org.exoplatform.management.content.operations.site;
 
 import java.util.HashSet;
 import java.util.Set;

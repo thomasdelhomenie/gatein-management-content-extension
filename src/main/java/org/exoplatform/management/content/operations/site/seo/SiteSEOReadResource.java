@@ -1,4 +1,4 @@
-package org.exoplatform.management.content.operations;
+package org.exoplatform.management.content.operations.site.seo;
 
 import java.util.HashSet;
 
@@ -13,7 +13,7 @@ import org.gatein.management.api.operation.model.ReadResourceModel;
  *         Delhoménie</a>
  * @version $Revision$
  */
-public class ContentSiteReadResource implements OperationHandler {
+public class SiteSEOReadResource implements OperationHandler {
   @Override
   public void execute(OperationContext operationContext, ResultHandler resultHandler) throws OperationException {
     resultHandler.completed(new ReadResourceModel("Available sites.", new HashSet<String>()));

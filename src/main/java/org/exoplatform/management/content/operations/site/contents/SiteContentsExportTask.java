@@ -1,4 +1,4 @@
-package org.exoplatform.management.content.operations;
+package org.exoplatform.management.content.operations.site.contents;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -15,12 +15,12 @@ import org.gatein.management.api.operation.model.ExportTask;
  * @author <a href="mailto:bkhanfir@exoplatform.com">Boubaker Khanfir</a>
  * @version $Revision$
  */
-public class SiteContentExportTask implements ExportTask {
+public class SiteContentsExportTask implements ExportTask {
   private final RepositoryService repositoryService;
   private final String workspace;
   private final String absolutePath;
 
-  public SiteContentExportTask(RepositoryService repositoryService, String workspace, String absolutePath) {
+  public SiteContentsExportTask(RepositoryService repositoryService, String workspace, String absolutePath) {
     this.repositoryService = repositoryService;
     this.workspace = workspace;
     this.absolutePath = absolutePath;
