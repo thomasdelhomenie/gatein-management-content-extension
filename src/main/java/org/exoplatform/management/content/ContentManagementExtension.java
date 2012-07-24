@@ -7,6 +7,10 @@ import org.exoplatform.management.content.operations.site.contents.SiteContentsE
 import org.exoplatform.management.content.operations.site.contents.SiteContentsReadResource;
 import org.exoplatform.management.content.operations.site.seo.SiteSEOExportResource;
 import org.exoplatform.management.content.operations.site.seo.SiteSEOReadResource;
+import org.exoplatform.management.content.operations.templates.TemplatesReadResource;
+import org.exoplatform.management.content.operations.templates.applications.ApplicationTemplatesExportResource;
+import org.exoplatform.management.content.operations.templates.applications.ApplicationTemplatesReadResource;
+import org.exoplatform.management.content.operations.templates.applications.ApplicationsTemplatesReadResource;
 import org.gatein.management.api.ComponentRegistration;
 import org.gatein.management.api.ManagedDescription;
 import org.gatein.management.api.ManagedResource;
@@ -50,6 +54,26 @@ public class ContentManagementExtension implements ManagementExtension {
     seo.registerOperationHandler(OperationNames.READ_RESOURCE, new SiteSEOReadResource(), description("Read site SEO data"));
     seo.registerOperationHandler(OperationNames.EXPORT_RESOURCE, new SiteSEOExportResource(),
         description("Export site SEO data"));    
+
+    // /content/templates
+    ManagedResource.Registration templates = content
+        .registerSubResource("templates", description("Sites Managed Resource, responsible for handling management operations on templates."));
+    templates.registerOperationHandler(OperationNames.READ_RESOURCE, new TemplatesReadResource(),
+        description("Lists available template types"));
+
+    // /content/templates/applications
+    ManagedResource.Registration applicationsTemplates = templates
+        .registerSubResource("applications", description("Sites Managed Resource, responsible for handling management operations on applications templates."));
+    applicationsTemplates.registerOperationHandler(OperationNames.READ_RESOURCE, new ApplicationsTemplatesReadResource(),
+        description("Lists available applications containing templates"));
+
+    // /content/templates/applications/<application_name>
+    ManagedResource.Registration applicationTemplates = applicationsTemplates
+        .registerSubResource("{application-name: .*}", description("Sites Managed Resource, responsible for handling management operations on templates of an application."));
+    applicationTemplates.registerOperationHandler(OperationNames.READ_RESOURCE, new ApplicationTemplatesReadResource(),
+        description("Lists available templates of an application"));
+    applicationTemplates.registerOperationHandler(OperationNames.EXPORT_RESOURCE, new ApplicationTemplatesExportResource(),
+            description("Exports available templates of an application"));    
   }
 
   @Override

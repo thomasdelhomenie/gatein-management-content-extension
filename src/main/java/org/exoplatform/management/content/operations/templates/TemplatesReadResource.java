@@ -1,4 +1,4 @@
-package org.exoplatform.management.content.operations;
+package org.exoplatform.management.content.operations.templates;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -10,14 +10,14 @@ import org.gatein.management.api.operation.OperationHandler;
 import org.gatein.management.api.operation.ResultHandler;
 import org.gatein.management.api.operation.model.ReadResourceModel;
 
-public class ContentReadResource implements OperationHandler {
+public class TemplatesReadResource implements OperationHandler {
 
 	@Override
 	public void execute(OperationContext operationContext, ResultHandler resultHandler) throws ResourceNotFoundException, OperationException {
-		Set<String> children = new LinkedHashSet<String>(1);
-		children.add("sites");
-		children.add("templates");
-		resultHandler.completed(new ReadResourceModel("Content", children));
+		Set<String> children = new LinkedHashSet<String>(2);
+	    children.add("applications");
+	    //children.add("nodes");
+		resultHandler.completed(new ReadResourceModel("Templates", children));
 	}
 
 }
