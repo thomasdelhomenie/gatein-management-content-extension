@@ -16,7 +16,7 @@ public class TemplatesReadResource implements OperationHandler {
 	public void execute(OperationContext operationContext, ResultHandler resultHandler) throws ResourceNotFoundException, OperationException {
 		Set<String> children = new LinkedHashSet<String>(2);
 	    children.add("applications");
-	    //children.add("nodes");
+	    children.add("nodetypes");
 		resultHandler.completed(new ReadResourceModel("Templates", children));
 	}
 

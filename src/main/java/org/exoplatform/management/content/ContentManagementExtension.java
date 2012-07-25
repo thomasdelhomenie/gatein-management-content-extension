@@ -11,6 +11,8 @@ import org.exoplatform.management.content.operations.templates.TemplatesReadReso
 import org.exoplatform.management.content.operations.templates.applications.ApplicationTemplatesExportResource;
 import org.exoplatform.management.content.operations.templates.applications.ApplicationTemplatesReadResource;
 import org.exoplatform.management.content.operations.templates.applications.ApplicationsTemplatesReadResource;
+import org.exoplatform.management.content.operations.templates.nodetypes.NodeTypesTemplatesExportResource;
+import org.exoplatform.management.content.operations.templates.nodetypes.NodeTypesTemplatesReadResource;
 import org.gatein.management.api.ComponentRegistration;
 import org.gatein.management.api.ManagedDescription;
 import org.gatein.management.api.ManagedResource;
@@ -73,7 +75,15 @@ public class ContentManagementExtension implements ManagementExtension {
     applicationTemplates.registerOperationHandler(OperationNames.READ_RESOURCE, new ApplicationTemplatesReadResource(),
         description("Lists available templates of an application"));
     applicationTemplates.registerOperationHandler(OperationNames.EXPORT_RESOURCE, new ApplicationTemplatesExportResource(),
-            description("Exports available templates of an application"));    
+            description("Exports available templates of an application"));  
+    
+    // /content/templates/nodetypes
+    ManagedResource.Registration nodetypesTemplates = templates
+        .registerSubResource("nodetypes", description("Sites Managed Resource, responsible for handling management operations on node types templates."));
+    nodetypesTemplates.registerOperationHandler(OperationNames.READ_RESOURCE, new NodeTypesTemplatesReadResource(),
+        description("Lists available node types templates"));
+    nodetypesTemplates.registerOperationHandler(OperationNames.EXPORT_RESOURCE, new NodeTypesTemplatesExportResource(),
+            description("Exports available node types templates"));
   }
 
   @Override
