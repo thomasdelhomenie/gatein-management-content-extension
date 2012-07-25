@@ -11,6 +11,8 @@ import org.exoplatform.management.content.operations.templates.TemplatesReadReso
 import org.exoplatform.management.content.operations.templates.applications.ApplicationTemplatesExportResource;
 import org.exoplatform.management.content.operations.templates.applications.ApplicationTemplatesReadResource;
 import org.exoplatform.management.content.operations.templates.applications.ApplicationsTemplatesReadResource;
+import org.exoplatform.management.content.operations.templates.metadata.MetadataTemplatesExportResource;
+import org.exoplatform.management.content.operations.templates.metadata.MetadataTemplatesReadResource;
 import org.exoplatform.management.content.operations.templates.nodetypes.NodeTypesTemplatesExportResource;
 import org.exoplatform.management.content.operations.templates.nodetypes.NodeTypesTemplatesReadResource;
 import org.gatein.management.api.ComponentRegistration;
@@ -84,6 +86,14 @@ public class ContentManagementExtension implements ManagementExtension {
         description("Lists available node types templates"));
     nodetypesTemplates.registerOperationHandler(OperationNames.EXPORT_RESOURCE, new NodeTypesTemplatesExportResource(),
             description("Exports available node types templates"));
+    
+    // /content/templates/metadata
+    ManagedResource.Registration metadataTemplates = templates
+        .registerSubResource("metadata", description("Sites Managed Resource, responsible for handling management operations on metadata templates."));
+    metadataTemplates.registerOperationHandler(OperationNames.READ_RESOURCE, new MetadataTemplatesReadResource(),
+        description("Lists available metadata templates"));
+    metadataTemplates.registerOperationHandler(OperationNames.EXPORT_RESOURCE, new MetadataTemplatesExportResource(),
+            description("Exports available metadata templates"));    
   }
 
   @Override

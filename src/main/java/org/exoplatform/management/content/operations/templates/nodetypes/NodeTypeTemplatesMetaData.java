@@ -5,15 +5,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.exoplatform.management.content.operations.templates.NodeTemplate;
+
 
 public class NodeTypeTemplatesMetaData {
 
 	private String label;
 	private boolean documentTemplate;
-	private Map<String, List<Template>> templates;
+	private Map<String, List<NodeTemplate>> templates;
 	
 	public NodeTypeTemplatesMetaData() {
-		this.templates = new HashMap<String, List<Template>>();
+		this.templates = new HashMap<String, List<NodeTemplate>>();
 	}
 
 	public String getLabel() {
@@ -32,18 +34,18 @@ public class NodeTypeTemplatesMetaData {
 		this.documentTemplate = documentTemplate;
 	}
 
-	public Map<String, List<Template>> getTemplates() {
+	public Map<String, List<NodeTemplate>> getTemplates() {
 		return templates;
 	}
 
-	public void setTemplates(Map<String, List<Template>> templates) {
+	public void setTemplates(Map<String, List<NodeTemplate>> templates) {
 		this.templates = templates;
 	}
 	
-	public void addTemplate(String type, Template template) {
-		List<Template> typeTemplates = templates.get(type);
+	public void addTemplate(String type, NodeTemplate template) {
+		List<NodeTemplate> typeTemplates = templates.get(type);
 		if(typeTemplates == null) {
-			typeTemplates = new ArrayList<Template>();
+			typeTemplates = new ArrayList<NodeTemplate>();
 		}
 		
 		typeTemplates.add(template);

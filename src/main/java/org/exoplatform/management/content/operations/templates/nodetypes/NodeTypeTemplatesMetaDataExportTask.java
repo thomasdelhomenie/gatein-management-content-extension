@@ -3,6 +3,7 @@ package org.exoplatform.management.content.operations.templates.nodetypes;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.exoplatform.management.content.operations.templates.NodeTemplate;
 import org.gatein.management.api.operation.model.ExportTask;
 
 import com.thoughtworks.xstream.XStream;
@@ -30,7 +31,7 @@ public class NodeTypeTemplatesMetaDataExportTask implements ExportTask {
   public void export(OutputStream outputStream) throws IOException {
     XStream xStream = new XStream();
     xStream.alias("metadata", NodeTypeTemplatesMetaData.class);
-    xStream.alias("template", Template.class);
+    xStream.alias("template", NodeTemplate.class);
     String xmlContent = xStream.toXML(metaData);
     outputStream.write(xmlContent.getBytes());
   }

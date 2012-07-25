@@ -1,10 +1,10 @@
-package org.exoplatform.management.content.operations.templates.nodetypes;
+package org.exoplatform.management.content.operations.templates;
 
-public class Template {
+public class NodeTemplate {
 	private String templateFile;
 	private String roles;
 	
-	public Template(String templateFile, String roles) {
+	public NodeTemplate(String templateFile, String roles) {
 		super();
 		this.templateFile = templateFile;
 		this.roles = roles;

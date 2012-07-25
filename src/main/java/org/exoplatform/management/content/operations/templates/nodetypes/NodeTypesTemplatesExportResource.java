@@ -7,6 +7,8 @@ import javax.jcr.Node;
 import javax.jcr.NodeIterator;
 import javax.jcr.RepositoryException;
 
+import org.exoplatform.management.content.exporttask.NodeFileExportTask;
+import org.exoplatform.management.content.operations.templates.NodeTemplate;
 import org.exoplatform.services.cms.templates.TemplateService;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
 import org.gatein.management.api.exceptions.OperationException;
@@ -95,7 +97,7 @@ public class NodeTypesTemplatesExportResource implements OperationHandler {
 				exportTasks.add(new NodeFileExportTask(viewTemplateNode, EXPORT_BASE_PATH + path + ".gtmpl"));
 				
 				
-				metadata.addTemplate(type, new Template(path + ".gtmpl", templateService.getTemplateRoles(viewTemplateNode)));
+				metadata.addTemplate(type, new NodeTemplate(path + ".gtmpl", templateService.getTemplateRoles(viewTemplateNode)));
 			}
 		}
 	}

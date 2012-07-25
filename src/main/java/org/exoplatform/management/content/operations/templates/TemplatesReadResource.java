@@ -17,6 +17,7 @@ public class TemplatesReadResource implements OperationHandler {
 		Set<String> children = new LinkedHashSet<String>(2);
 	    children.add("applications");
 	    children.add("nodetypes");
+	    children.add("metadata");
 		resultHandler.completed(new ReadResourceModel("Templates", children));
 	}
 

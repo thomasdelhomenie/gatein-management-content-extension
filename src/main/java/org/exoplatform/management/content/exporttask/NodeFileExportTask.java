@@ -1,4 +1,4 @@
-package org.exoplatform.management.content.operations.templates.nodetypes;
+package org.exoplatform.management.content.exporttask;
 
 import java.io.IOException;
 import java.io.InputStream;
