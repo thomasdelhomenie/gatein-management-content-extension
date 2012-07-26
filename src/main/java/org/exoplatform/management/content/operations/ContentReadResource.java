@@ -17,6 +17,7 @@ public class ContentReadResource implements OperationHandler {
 		Set<String> children = new LinkedHashSet<String>(1);
 		children.add("sites");
 		children.add("templates");
+		children.add("queries");
 		resultHandler.completed(new ReadResourceModel("Content", children));
 	}
 

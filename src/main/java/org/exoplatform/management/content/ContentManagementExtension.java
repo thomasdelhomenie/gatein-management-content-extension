@@ -1,6 +1,8 @@
 package org.exoplatform.management.content;
 
 import org.exoplatform.management.content.operations.ContentReadResource;
+import org.exoplatform.management.content.operations.queries.QueriesExportResource;
+import org.exoplatform.management.content.operations.queries.QueriesReadResource;
 import org.exoplatform.management.content.operations.site.LiveSitesReadResource;
 import org.exoplatform.management.content.operations.site.SiteReadResource;
 import org.exoplatform.management.content.operations.site.contents.SiteContentsExportResource;
@@ -94,6 +96,14 @@ public class ContentManagementExtension implements ManagementExtension {
         description("Lists available metadata templates"));
     metadataTemplates.registerOperationHandler(OperationNames.EXPORT_RESOURCE, new MetadataTemplatesExportResource(),
             description("Exports available metadata templates"));    
+    
+    // /content/queries
+    ManagedResource.Registration queries = content
+        .registerSubResource("queries", description("Queries Managed Resource, responsible for handling management operations on queries."));
+    queries.registerOperationHandler(OperationNames.READ_RESOURCE, new QueriesReadResource(),
+        description("Lists available queries"));
+    queries.registerOperationHandler(OperationNames.EXPORT_RESOURCE, new QueriesExportResource(),
+            description("Exports available queries"));
   }
 
   @Override
