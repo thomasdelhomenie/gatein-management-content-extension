@@ -5,7 +5,6 @@ import java.util.List;
 
 import javax.jcr.Node;
 import javax.jcr.NodeIterator;
-import javax.jcr.RepositoryException;
 
 import org.exoplatform.management.content.exporttask.NodeFileExportTask;
 import org.exoplatform.management.content.operations.templates.NodeTemplate;
