@@ -3,6 +3,7 @@ package org.exoplatform.management.content.operations.site.contents;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.exoplatform.management.content.operations.site.contents.SiteMetaData;
 import org.gatein.management.api.operation.model.ExportTask;
 
 import com.thoughtworks.xstream.XStream;
@@ -13,22 +14,24 @@ import com.thoughtworks.xstream.XStream;
  */
 public class SiteMetaDataExportTask implements ExportTask {
 
-  private SiteMetaData metaData = null;
+	public static final String FILENAME = "metadata.xml";
 
-  public SiteMetaDataExportTask(SiteMetaData metaData) {
-    this.metaData = metaData;
-  }
+	private SiteMetaData metaData = null;
 
-  @Override
-  public String getEntry() {
-    return "metadata.xml";
-  }
+	public SiteMetaDataExportTask(SiteMetaData metaData) {
+		this.metaData = metaData;
+	}
 
-  @Override
-  public void export(OutputStream outputStream) throws IOException {
-    XStream xStream = new XStream();
-    xStream.alias("metadata", SiteMetaData.class);
-    String xmlContent = xStream.toXML(metaData);
-    outputStream.write(xmlContent.getBytes());
-  }
+	@Override
+	public String getEntry() {
+		return FILENAME;
+	}
+
+	@Override
+	public void export(OutputStream outputStream) throws IOException {
+		XStream xStream = new XStream();
+		xStream.alias("metadata", SiteMetaData.class);
+		String xmlContent = xStream.toXML(metaData);
+		outputStream.write(xmlContent.getBytes());
+	}
 }

@@ -5,8 +5,6 @@ import org.exoplatform.management.content.operations.queries.QueriesExportResour
 import org.exoplatform.management.content.operations.queries.QueriesReadResource;
 import org.exoplatform.management.content.operations.site.LiveSitesReadResource;
 import org.exoplatform.management.content.operations.site.SiteReadResource;
-import org.exoplatform.management.content.operations.site.contents.SiteContentsExportResource;
-import org.exoplatform.management.content.operations.site.contents.SiteContentsReadResource;
 import org.exoplatform.management.content.operations.site.seo.SiteSEOExportResource;
 import org.exoplatform.management.content.operations.site.seo.SiteSEOReadResource;
 import org.exoplatform.management.content.operations.templates.TemplatesReadResource;
@@ -17,6 +15,9 @@ import org.exoplatform.management.content.operations.templates.metadata.Metadata
 import org.exoplatform.management.content.operations.templates.metadata.MetadataTemplatesReadResource;
 import org.exoplatform.management.content.operations.templates.nodetypes.NodeTypesTemplatesExportResource;
 import org.exoplatform.management.content.operations.templates.nodetypes.NodeTypesTemplatesReadResource;
+import org.exoplatform.management.content.operations.site.contents.SiteContentsExportResource;
+import org.exoplatform.management.content.operations.site.contents.SiteContentsImportResource;
+import org.exoplatform.management.content.operations.site.contents.SiteContentsReadResource;
 import org.gatein.management.api.ComponentRegistration;
 import org.gatein.management.api.ManagedDescription;
 import org.gatein.management.api.ManagedResource;
@@ -38,6 +39,8 @@ public class ContentManagementExtension implements ManagementExtension {
         .registerManagedResource(description("Content Managed Resource, responsible for handling management operations on contents."));
     content.registerOperationHandler(OperationNames.READ_RESOURCE, new ContentReadResource(),
         description("Lists available contents data"));
+    content.registerOperationHandler(OperationNames.IMPORT_RESOURCE, new SiteContentsImportResource(),
+            description("Import contents data"));
 
     // /content/sites
     ManagedResource.Registration sites = content
