@@ -43,8 +43,6 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.apache.commons.lang.StringUtils;
-import org.exoplatform.management.content.operations.site.contents.SiteMetaData;
-import org.exoplatform.management.content.operations.site.contents.SiteMetaDataExportTask;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
@@ -79,18 +77,18 @@ public class SiteContentsImportResource implements OperationHandler {
 		// "uuidBehavior" attribute
 		int uuidBehaviorValue = extractUuidBehavior(operationContext.getAttributes().getValue("uuidBehavior"));
 
-		Map<String, String> nodes = new HashMap<String, String>();
-
-		SiteMetaData metaData = collectFileData(operationContext, nodes);
-
-		Map<String, String> metaDataOptions = metaData.getOptions();
+		OperationAttachment attachment = operationContext.getAttachment(false);
+		
+		ZipContent zipContent = extractZip(attachment);
+		
+		Map<String, String> metaDataOptions = zipContent.getSiteMetadata().getOptions();
 		String workspace = metaDataOptions.get("site-workspace");
 		String siteName = metaDataOptions.get("site-name"); // never used
 		String sitePath = metaDataOptions.get("site-path"); // never used
 		log.info("Reading metadata options for import: workspace: " + workspace);
 
 		try {
-			importContentNodes(operationContext, metaData, nodes, workspace, uuidBehaviorValue);
+			importContentNodes(operationContext, zipContent.getSiteMetadata(), zipContent.getNodeExportFiles(), workspace, uuidBehaviorValue);
 			log.info("Content import has been finished");
 			resultHandler.completed(NoResultModel.INSTANCE);
 		} catch (Exception e) {
@@ -205,29 +203,22 @@ public class SiteContentsImportResource implements OperationHandler {
 		return uuidBehaviorValue;
 	}
 
-	/**
-	 * Extract metadata file and JCR export XML files form the archive
-	 * @param operationContext
-	 * @param nodes
-	 * @return
-	 * @throws OperationException
-	 */
-	public SiteMetaData collectFileData(OperationContext operationContext, Map<String, String> nodes) throws OperationException {
-		OperationAttachment attachment = operationContext.getAttachment(false);
+	private ZipContent extractZip(OperationAttachment attachment) {
 		if (attachment == null) {
 			throw new OperationException(this.operationName, "No attachment available for Site Content import.");
 		}
 
-		InputStream metaInputStream = attachment.getStream();
-		if (metaInputStream == null) {
+		InputStream attachmentInputStream = attachment.getStream();
+		if (attachmentInputStream == null) {
 			throw new OperationException(this.operationName, "No data stream available for Site Content import.");
 		}
 
-		final NonCloseableZipInputStream zis = new NonCloseableZipInputStream(metaInputStream);
+		final NonCloseableZipInputStream zis = new NonCloseableZipInputStream(attachmentInputStream);
 
-		SiteMetaData siteMetaData = null;
+		ZipContent zipContent = new ZipContent();
+		
+		Map<String, String> nodes = new HashMap<String, String>();
 		try {
-
 			ZipEntry entry;
 			while ((entry = zis.getNextEntry()) != null) {
 				// Skip directories
@@ -242,7 +233,8 @@ public class SiteContentsImportResource implements OperationHandler {
 					XStream xstream = new XStream();
 					xstream.alias("metadata", SiteMetaData.class);
 					InputStreamReader isr = new InputStreamReader(zis, "UTF-8");
-					siteMetaData = (SiteMetaData) xstream.fromXML(isr);
+					SiteMetaData siteMetadata = (SiteMetaData) xstream.fromXML(isr);
+					zipContent.setSiteMetadata(siteMetadata);
 				}
 				if (file.startsWith("sites/contents-sysview")) {
 					String name = entry.getName();
@@ -251,12 +243,15 @@ public class SiteContentsImportResource implements OperationHandler {
 					nodes.put(name, nodeContent);
 				}
 			}
+			zipContent.setNodeExportFiles(nodes);
 
 			zis.reallyClose();
 		} catch (IOException e) {
 			throw new OperationException(this.operationName, "Exception when reading the underlying data stream from import.", e);
 		}
-		return siteMetaData;
+		
+		return zipContent;
+
 	}
 
 	// Bug in SUN's JDK XMLStreamReader implementation closes the underlying
