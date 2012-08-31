@@ -1,12 +1,16 @@
 package org.exoplatform.management.content;
 
 import org.exoplatform.management.content.operations.ContentReadResource;
+import org.exoplatform.management.content.operations.EmptyReadResource;
 import org.exoplatform.management.content.operations.queries.QueriesExportResource;
 import org.exoplatform.management.content.operations.queries.QueriesReadResource;
 import org.exoplatform.management.content.operations.site.LiveSitesReadResource;
 import org.exoplatform.management.content.operations.site.SiteReadResource;
 import org.exoplatform.management.content.operations.site.seo.SiteSEOExportResource;
 import org.exoplatform.management.content.operations.site.seo.SiteSEOReadResource;
+import org.exoplatform.management.content.operations.site.taxonomy.TaxonomyExportResource;
+import org.exoplatform.management.content.operations.site.taxonomy.TaxonomyImportResource;
+import org.exoplatform.management.content.operations.site.taxonomy.TaxonomyReadResource;
 import org.exoplatform.management.content.operations.templates.TemplatesReadResource;
 import org.exoplatform.management.content.operations.templates.applications.ApplicationTemplatesExportResource;
 import org.exoplatform.management.content.operations.templates.applications.ApplicationTemplatesReadResource;
@@ -107,6 +111,24 @@ public class ContentManagementExtension implements ManagementExtension {
         description("Lists available queries"));
     queries.registerOperationHandler(OperationNames.EXPORT_RESOURCE, new QueriesExportResource(),
             description("Exports available queries"));
+
+    // /content/taxonomy
+    ManagedResource.Registration taxonomies = content
+        .registerSubResource("taxonomy", description("Taxonomy Managed Resource, responsible for handling management operations on taxonomies."));
+    taxonomies.registerOperationHandler(OperationNames.READ_RESOURCE, new TaxonomyReadResource(),
+        description("Lists available taxonomies"));
+    taxonomies.registerOperationHandler(OperationNames.EXPORT_RESOURCE, new TaxonomyExportResource(),
+        description("Exports available taxonomies"));
+    taxonomies.registerOperationHandler(OperationNames.IMPORT_RESOURCE, new TaxonomyImportResource(),
+        description("Imports available taxonomies"));
+    
+    // /content/taxonomy/name
+    ManagedResource.Registration taxonomy = taxonomies
+        .registerSubResource("{taxonomy-name: .*}", description("Taxonomy Managed Resource, responsible for handling management operations on taxonomies."));
+    taxonomy.registerOperationHandler(OperationNames.READ_RESOURCE, new EmptyReadResource(),
+        description("nothing"));
+    taxonomy.registerOperationHandler(OperationNames.EXPORT_RESOURCE, new TaxonomyExportResource(),
+            description("Exports selected taxonomy"));
   }
 
   @Override
