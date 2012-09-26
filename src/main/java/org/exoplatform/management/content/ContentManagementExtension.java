@@ -2,10 +2,16 @@ package org.exoplatform.management.content;
 
 import org.exoplatform.management.content.operations.ContentReadResource;
 import org.exoplatform.management.content.operations.EmptyReadResource;
+import org.exoplatform.management.content.operations.drive.DriveExportResource;
+import org.exoplatform.management.content.operations.drive.DriveImportResource;
+import org.exoplatform.management.content.operations.drive.DriveReadResource;
 import org.exoplatform.management.content.operations.queries.QueriesExportResource;
 import org.exoplatform.management.content.operations.queries.QueriesReadResource;
 import org.exoplatform.management.content.operations.site.LiveSitesReadResource;
 import org.exoplatform.management.content.operations.site.SiteReadResource;
+import org.exoplatform.management.content.operations.site.contents.SiteContentsExportResource;
+import org.exoplatform.management.content.operations.site.contents.SiteContentsImportResource;
+import org.exoplatform.management.content.operations.site.contents.SiteContentsReadResource;
 import org.exoplatform.management.content.operations.site.seo.SiteSEOExportResource;
 import org.exoplatform.management.content.operations.site.seo.SiteSEOReadResource;
 import org.exoplatform.management.content.operations.site.taxonomy.TaxonomyExportResource;
@@ -19,9 +25,6 @@ import org.exoplatform.management.content.operations.templates.metadata.Metadata
 import org.exoplatform.management.content.operations.templates.metadata.MetadataTemplatesReadResource;
 import org.exoplatform.management.content.operations.templates.nodetypes.NodeTypesTemplatesExportResource;
 import org.exoplatform.management.content.operations.templates.nodetypes.NodeTypesTemplatesReadResource;
-import org.exoplatform.management.content.operations.site.contents.SiteContentsExportResource;
-import org.exoplatform.management.content.operations.site.contents.SiteContentsImportResource;
-import org.exoplatform.management.content.operations.site.contents.SiteContentsReadResource;
 import org.gatein.management.api.ComponentRegistration;
 import org.gatein.management.api.ManagedDescription;
 import org.gatein.management.api.ManagedResource;
@@ -121,6 +124,16 @@ public class ContentManagementExtension implements ManagementExtension {
         description("Exports available taxonomies"));
     taxonomies.registerOperationHandler(OperationNames.IMPORT_RESOURCE, new TaxonomyImportResource(),
         description("Imports available taxonomies"));
+
+    // /content/drive
+    ManagedResource.Registration drive = content
+        .registerSubResource("drive", description("ECMS Drive Managed Resource, responsible for handling management operations on ECMS Drives."));
+    drive.registerOperationHandler(OperationNames.READ_RESOURCE, new DriveReadResource(),
+        description("Lists available drives"));
+    drive.registerOperationHandler(OperationNames.EXPORT_RESOURCE, new DriveExportResource(),
+        description("Exports available drives"));
+    drive.registerOperationHandler(OperationNames.IMPORT_RESOURCE, new DriveImportResource(),
+        description("Imports available drives"));
     
     // /content/taxonomy/name
     ManagedResource.Registration taxonomy = taxonomies
