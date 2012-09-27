@@ -9,6 +9,7 @@ import javax.jcr.nodetype.NodeTypeManager;
 
 import org.exoplatform.services.jcr.RepositoryService;
 import org.gatein.management.api.exceptions.OperationException;
+import org.gatein.management.api.operation.OperationAttributes;
 import org.gatein.management.api.operation.OperationContext;
 import org.gatein.management.api.operation.OperationHandler;
 import org.gatein.management.api.operation.OperationNames;
@@ -27,6 +28,8 @@ public class NodeTypeExportResource implements OperationHandler {
 
   @Override
   public void execute(OperationContext operationContext, ResultHandler resultHandler) throws OperationException {
+    OperationAttributes attributes = operationContext.getAttributes();
+    List<String> filters = attributes.getValues("filter");
     if (repositoryService == null) {
       repositoryService = operationContext.getRuntimeContext().getRuntimeComponent(RepositoryService.class);
     }
@@ -36,7 +39,9 @@ public class NodeTypeExportResource implements OperationHandler {
       NodeTypeIterator nodeTypesIterator = ntManager.getAllNodeTypes();
       while (nodeTypesIterator.hasNext()) {
         NodeType nodeType = nodeTypesIterator.nextNodeType();
-        exportTasks.add(new NodeTypeExportTask(nodeType));
+        if (filters.isEmpty() || filters.contains(nodeType.getName())) {
+          exportTasks.add(new NodeTypeExportTask(nodeType));
+        }
       }
     } catch (Exception exception) {
       throw new OperationException(OperationNames.EXPORT_RESOURCE, "Error while retrieving nodetypes", exception);

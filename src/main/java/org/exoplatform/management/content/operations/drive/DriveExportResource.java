@@ -12,6 +12,7 @@ import org.exoplatform.services.cms.drives.DriveData;
 import org.exoplatform.services.cms.drives.ManageDriveService;
 import org.exoplatform.services.cms.drives.impl.ManageDrivePlugin;
 import org.gatein.management.api.exceptions.OperationException;
+import org.gatein.management.api.operation.OperationAttributes;
 import org.gatein.management.api.operation.OperationContext;
 import org.gatein.management.api.operation.OperationHandler;
 import org.gatein.management.api.operation.OperationNames;
@@ -31,6 +32,8 @@ public class DriveExportResource implements OperationHandler {
 
   @Override
   public void execute(OperationContext operationContext, ResultHandler resultHandler) throws OperationException {
+    OperationAttributes attributes = operationContext.getAttributes();
+    List<String> filters = attributes.getValues("filter");
     if (driveService == null) {
       driveService = operationContext.getRuntimeContext().getRuntimeComponent(ManageDriveService.class);
     }
@@ -52,10 +55,12 @@ public class DriveExportResource implements OperationHandler {
 
       List<DriveData> driveDataList = driveService.getAllDrives();
       for (DriveData driveData : driveDataList) {
-        ObjectParameter objectParam = new ObjectParameter();
-        objectParam.setName(driveData.getName());
-        objectParam.setObject(driveData);
-        templatesPluginInitParams.addParam(objectParam);
+        if (filters.isEmpty() || filters.contains(driveData.getName())) {
+          ObjectParameter objectParam = new ObjectParameter();
+          objectParam.setName(driveData.getName());
+          objectParam.setObject(driveData);
+          templatesPluginInitParams.addParam(objectParam);
+        }
       }
 
       configuration = new Configuration();

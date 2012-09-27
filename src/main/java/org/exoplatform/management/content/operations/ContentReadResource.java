@@ -22,6 +22,7 @@ public class ContentReadResource implements OperationHandler {
     children.add("drive");
     children.add("script");
     children.add("action");
+    children.add("nodetype");
 		resultHandler.completed(new ReadResourceModel("Content", children));
 	}
 

@@ -10,6 +10,7 @@ import org.exoplatform.management.content.operations.nodetype.NodeTypeExportTask
 import org.exoplatform.services.cms.actions.ActionServiceContainer;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.gatein.management.api.exceptions.OperationException;
+import org.gatein.management.api.operation.OperationAttributes;
 import org.gatein.management.api.operation.OperationContext;
 import org.gatein.management.api.operation.OperationHandler;
 import org.gatein.management.api.operation.OperationNames;
@@ -29,6 +30,8 @@ public class ActionExportResource implements OperationHandler {
 
   @Override
   public void execute(OperationContext operationContext, ResultHandler resultHandler) throws OperationException {
+    OperationAttributes attributes = operationContext.getAttributes();
+    List<String> filters = attributes.getValues("filter");
     if (actionsServiceContainer == null) {
       actionsServiceContainer = operationContext.getRuntimeContext().getRuntimeComponent(ActionServiceContainer.class);
     }
@@ -40,7 +43,9 @@ public class ActionExportResource implements OperationHandler {
       Collection<NodeType> nodeTypes = actionsServiceContainer.getCreatedActionTypes(repositoryService.getCurrentRepository()
           .getConfiguration().getName());
       for (NodeType nodeType : nodeTypes) {
-        exportTasks.add(new NodeTypeExportTask(nodeType));
+        if (filters.isEmpty() || filters.contains(nodeType.getName())) {
+          exportTasks.add(new NodeTypeExportTask(nodeType));
+        }
       }
     } catch (Exception exception) {
       throw new OperationException(OperationNames.EXPORT_RESOURCE, "Error while retrieving actions: ", exception);
