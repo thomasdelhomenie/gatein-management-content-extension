@@ -18,7 +18,9 @@ public class ContentReadResource implements OperationHandler {
 		children.add("sites");
 		children.add("templates");
     children.add("taxonomy");
-		children.add("queries");
+    children.add("queries");
+    children.add("drive");
+    children.add("script");
 		resultHandler.completed(new ReadResourceModel("Content", children));
 	}
 
