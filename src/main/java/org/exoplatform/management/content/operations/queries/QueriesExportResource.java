@@ -9,8 +9,14 @@ import javax.jcr.Value;
 import javax.jcr.query.Query;
 
 import org.exoplatform.commons.utils.ListAccess;
+import org.exoplatform.container.xml.ComponentPlugin;
+import org.exoplatform.container.xml.Configuration;
+import org.exoplatform.container.xml.ExternalComponentPlugins;
+import org.exoplatform.container.xml.InitParams;
+import org.exoplatform.container.xml.ObjectParameter;
 import org.exoplatform.services.cms.queries.QueryService;
 import org.exoplatform.services.cms.queries.impl.QueryData;
+import org.exoplatform.services.cms.queries.impl.QueryPlugin;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
 import org.exoplatform.services.wcm.utils.WCMCoreUtils;
@@ -23,8 +29,7 @@ import org.gatein.management.api.operation.model.ExportResourceModel;
 import org.gatein.management.api.operation.model.ExportTask;
 
 /**
- * @author <a href="mailto:thomas.delhomenie@exoplatform.com">Thomas
- *         Delhoménie</a>
+ * @author <a href="mailto:thomas.delhomenie@exoplatform.com">Thomas Delhoménie</a>
  * @version $Revision$
  */
 public class QueriesExportResource implements OperationHandler {
@@ -34,16 +39,29 @@ public class QueriesExportResource implements OperationHandler {
 		try {
 			QueryService queryService = operationContext.getRuntimeContext().getRuntimeComponent(QueryService.class);
 			OrganizationService organizationService = operationContext.getRuntimeContext().getRuntimeComponent(OrganizationService.class);
-			
+
 			List<ExportTask> exportTasks = new ArrayList<ExportTask>();
-			
+
 			// shared queries
-			List<QueryData> queries = new ArrayList<QueryData>();
-			
 			List<Node> sharedQueries = queryService.getSharedQueries(WCMCoreUtils.getSystemSessionProvider());
-			
+
+			Configuration configurationSharedQueries = null;
+			ExternalComponentPlugins externalComponentPlugins = new ExternalComponentPlugins();
+			externalComponentPlugins.setTargetComponent(QueryService.class.getName());
+			ArrayList<ComponentPlugin> componentPluginsList = new ArrayList<ComponentPlugin>();
+			externalComponentPlugins.setComponentPlugins(componentPluginsList);
+
+			ComponentPlugin queriesComponentPlugin = new ComponentPlugin();
+			queriesComponentPlugin.setName("query.plugin");
+			queriesComponentPlugin.setSetMethod("setQueryPlugin");
+			queriesComponentPlugin.setType(QueryPlugin.class.getName());
+
+			InitParams queriesPluginInitParams = new InitParams();
+			queriesComponentPlugin.setInitParams(queriesPluginInitParams);
+			componentPluginsList.add(queriesComponentPlugin);
+
 			// Queries API returns Node object instead of QueryData, so we need to convert them...
-			for(Node sharedQueryNode : sharedQueries) {
+			for (Node sharedQueryNode : sharedQueries) {
 				QueryData queryData = new QueryData();
 				queryData.setName(sharedQueryNode.getProperty("exo:name").getString());
 				queryData.setStatement(sharedQueryNode.getProperty("jcr:statement").getString());
@@ -51,24 +69,44 @@ public class QueriesExportResource implements OperationHandler {
 				queryData.setCacheResult(sharedQueryNode.getProperty("exo:cachedResult").getBoolean());
 				Value[] permissionsValues = sharedQueryNode.getProperty("exo:accessPermissions").getValues();
 				List<String> permissions = new ArrayList<String>();
-				for(Value permissionValue : permissionsValues) {
+				for (Value permissionValue : permissionsValues) {
 					permissions.add(permissionValue.getString());
 				}
 				queryData.setPermissions(permissions);
-				
-				queries.add(queryData);
+
+				ObjectParameter objectParam = new ObjectParameter();
+				objectParam.setName(queryData.getName());
+				objectParam.setObject(queryData);
+				queriesPluginInitParams.addParam(objectParam);
 			}
-			
-			exportTasks.add(new QueriesExportTask(queries, null));
+
+			configurationSharedQueries = new Configuration();
+			configurationSharedQueries.addExternalComponentPlugins(externalComponentPlugins);
+
+			exportTasks.add(new QueriesExportTask(configurationSharedQueries, null));
 
 			// users queries
 			ListAccess<User> usersListAccess = organizationService.getUserHandler().findAllUsers();
 			User[] users = usersListAccess.load(0, usersListAccess.getSize());
-			for(User user : users) {
-				List<QueryData> userQueriesData = new ArrayList<QueryData>();
-				
+			for (User user : users) {
+				Configuration configurationUserQueries = new Configuration();
+
+				ExternalComponentPlugins userQueriesExternalComponentPlugins = new ExternalComponentPlugins();
+				userQueriesExternalComponentPlugins.setTargetComponent(QueryService.class.getName());
+				ArrayList<ComponentPlugin> userQueriesComponentPluginsList = new ArrayList<ComponentPlugin>();
+				userQueriesExternalComponentPlugins.setComponentPlugins(userQueriesComponentPluginsList);
+
+				ComponentPlugin userQueriesComponentPlugin = new ComponentPlugin();
+				userQueriesComponentPlugin.setName("query.plugin");
+				userQueriesComponentPlugin.setSetMethod("setQueryPlugin");
+				userQueriesComponentPlugin.setType(QueryPlugin.class.getName());
+
+				InitParams userQueriesPluginInitParams = new InitParams();
+				userQueriesComponentPlugin.setInitParams(userQueriesPluginInitParams);
+				userQueriesComponentPluginsList.add(userQueriesComponentPlugin);
+
 				List<Query> userQueries = queryService.getQueries(user.getUserName(), WCMCoreUtils.getSystemSessionProvider());
-				for(Query query : userQueries) {
+				for (Query query : userQueries) {
 					QueryData queryData = new QueryData();
 					String queryPath = query.getStoredQueryPath();
 					queryData.setName(queryPath.substring(queryPath.lastIndexOf("/") + 1));
@@ -76,13 +114,18 @@ public class QueriesExportResource implements OperationHandler {
 					queryData.setLanguage(query.getLanguage());
 					queryData.setCacheResult(false);
 					// no permissions are set on users' queries
-					queryData.setPermissions(Collections.<String>emptyList());
-					userQueriesData.add(queryData);
+					queryData.setPermissions(Collections.<String> emptyList());
+
+					ObjectParameter objectParam = new ObjectParameter();
+					objectParam.setName(queryData.getName());
+					objectParam.setObject(queryData);
+					userQueriesPluginInitParams.addParam(objectParam);
 				}
-				
-				exportTasks.add(new QueriesExportTask(userQueriesData, user.getUserName()));
+
+				configurationUserQueries.addExternalComponentPlugins(userQueriesExternalComponentPlugins);
+				exportTasks.add(new QueriesExportTask(configurationUserQueries, user.getUserName()));
 			}
-			
+
 			resultHandler.completed(new ExportResourceModel(exportTasks));
 		} catch (Exception e) {
 			throw new OperationException(OperationNames.EXPORT_RESOURCE, "Unable to retrieve the list of the contents sites : " + e.getMessage());

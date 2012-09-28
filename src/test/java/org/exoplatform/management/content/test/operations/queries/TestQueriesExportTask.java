@@ -8,11 +8,19 @@ import java.util.List;
 
 import org.custommonkey.xmlunit.Diff;
 import org.custommonkey.xmlunit.XMLUnit;
+import org.exoplatform.container.xml.ComponentPlugin;
+import org.exoplatform.container.xml.Configuration;
+import org.exoplatform.container.xml.ExternalComponentPlugins;
+import org.exoplatform.container.xml.InitParams;
+import org.exoplatform.container.xml.ObjectParameter;
 import org.exoplatform.management.content.operations.queries.QueriesExportTask;
+import org.exoplatform.services.cms.queries.QueryService;
 import org.exoplatform.services.cms.queries.impl.QueryData;
+import org.exoplatform.services.cms.queries.impl.QueryPlugin;
 import org.gatein.management.api.operation.model.ExportTask;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
@@ -31,45 +39,9 @@ public class TestQueriesExportTask {
 	@Test
 	public void exportEntry() {
 		String userId = "root";
-		List<QueryData> queries = new ArrayList<QueryData>();
+		Configuration configuration = new Configuration();
 		
-		Assert.assertEquals(new QueriesExportTask(queries, userId).getEntry(), "queries/users/root-queries.xml");
-		Assert.assertEquals(new QueriesExportTask(queries, null).getEntry(), "queries/shared-queries.xml");
-	}
-	
-	@Test
-	public void exportUserQueries() throws IOException, SAXException {
-		// init data
-		String userId = "root";
-		List<QueryData> queries = new ArrayList<QueryData>();
-		QueryData query = new QueryData();
-		query.setName("test");
-		query.setLanguage("fr");
-		query.setStatement("statement");
-		query.setCacheResult(true);
-		query.setPermissions(Collections.<String>emptyList());		
-		queries.add(query);
-		
-		// export
-		ExportTask exportTask = new QueriesExportTask(queries, userId);		
-		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		exportTask.export(output);
-		
-		// test XML output
-		String controlXML = new StringBuilder()
-			.append("<queries>")
-			.append("<query>")
-			.append("<name>test</name>")
-			.append("<language>fr</language>")
-			.append("<statement>statement</statement>")
-			.append("<permissions/>")
-			.append("<cachedResult>true</cachedResult>")
-			.append("</query>")
-			.append("</queries>")
-			.toString();
-		
-		XMLUnit.setIgnoreWhitespace(true);
-		Diff diff = new Diff(controlXML, output.toString("UTF-8"));
-		Assert.assertTrue(diff.identical());
+		Assert.assertEquals(new QueriesExportTask(configuration, userId).getEntry(), "queries/users/root-queries-configuration.xml");
+		Assert.assertEquals(new QueriesExportTask(configuration, null).getEntry(), "queries/shared-queries-configuration.xml");
 	}
 }
