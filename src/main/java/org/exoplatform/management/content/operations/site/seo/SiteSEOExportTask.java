@@ -15,7 +15,7 @@ import com.thoughtworks.xstream.XStream;
  * @version $Revision$
  */
 public class SiteSEOExportTask implements ExportTask {
-	private static final String SEO_FILENAME = "seo.xml";
+	public static final String FILENAME = "seo.xml";
 	
 	private final List<PageMetadataModel> models;
 	private final String siteName;
@@ -27,7 +27,7 @@ public class SiteSEOExportTask implements ExportTask {
 
 	@Override
 	public String getEntry() {
-		return SiteUtil.getSiteBasePath(siteName) + "/" + SEO_FILENAME;
+		return SiteUtil.getSiteBasePath(siteName) + "/" + FILENAME;
 	}
 
 	@Override

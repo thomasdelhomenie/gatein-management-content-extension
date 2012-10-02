@@ -54,14 +54,14 @@ public class ContentManagementExtension implements ManagementExtension {
         .registerManagedResource(description("Content Managed Resource, responsible for handling management operations on contents."));
     content.registerOperationHandler(OperationNames.READ_RESOURCE, new ContentReadResource(),
         description("Lists available contents data"));
-    content.registerOperationHandler(OperationNames.IMPORT_RESOURCE, new SiteContentsImportResource(),
-        description("Import contents data"));
 
     // /content/sites
     ManagedResource.Registration sites = content.registerSubResource("sites",
         description("Sites Managed Resource, responsible for handling management operations on sites contents."));
     sites.registerOperationHandler(OperationNames.READ_RESOURCE, new LiveSitesReadResource(),
         description("Lists available sites"));
+    sites.registerOperationHandler(OperationNames.IMPORT_RESOURCE, new SiteContentsImportResource(),
+        description("Import sites data"));
 
     // /content/sites/<site_name>
     ManagedResource.Registration site = sites.registerSubResource("{site-name: .*}",

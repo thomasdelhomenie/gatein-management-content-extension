@@ -44,6 +44,7 @@ import javax.jcr.Session;
 
 import org.apache.commons.lang.StringUtils;
 import org.exoplatform.management.content.operations.site.SiteConstants;
+import org.exoplatform.management.content.operations.site.seo.SiteSEOExportTask;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
@@ -80,23 +81,36 @@ public class SiteContentsImportResource implements OperationHandler {
 
 		OperationAttachment attachment = operationContext.getAttachment(false);
 		
-		ZipContent zipContent = extractZip(attachment);
+		// extract data from zip
+		Map<String, SiteData> sitesData = extractDataFromZip(attachment);
 		
-		Map<String, String> metaDataOptions = zipContent.getSiteMetadata().getOptions();
-		String workspace = metaDataOptions.get("site-workspace");
-		String siteName = metaDataOptions.get("site-name"); // never used
-		String sitePath = metaDataOptions.get("site-path"); // never used
-		log.info("Reading metadata options for import: workspace: " + workspace);
-
-		try {
-			importContentNodes(operationContext, zipContent.getSiteMetadata(), zipContent.getNodeExportFiles(), workspace, uuidBehaviorValue);
-			log.info("Content import has been finished");
-			resultHandler.completed(NoResultModel.INSTANCE);
-		} catch (Exception e) {
-			throw new OperationException(operationName, "Unable to create import task", e);
+		// import data of each site
+		for(String siteName : sitesData.keySet()) {
+			SiteData siteData = sitesData.get(siteName);
+			
+			Map<String, String> metaDataOptions = siteData.getSiteMetadata().getOptions();
+			String workspace = metaDataOptions.get("site-workspace");
+			log.info("Reading metadata options for import: workspace: " + workspace);
+	
+			try {
+				importContentNodes(operationContext, siteData.getSiteMetadata(), siteData.getNodeExportFiles(), workspace, uuidBehaviorValue);
+				log.info("Content import has been finished");
+				resultHandler.completed(NoResultModel.INSTANCE);
+			} catch (Exception e) {
+				throw new OperationException(operationName, "Unable to create import task", e);
+			}
 		}
 	}
 
+	/**
+	 * Import data of a site
+	 * @param operationContext
+	 * @param metaData
+	 * @param nodes
+	 * @param workspace
+	 * @param uuidBehaviorValue
+	 * @throws Exception
+	 */
 	private void importContentNodes(OperationContext operationContext, SiteMetaData metaData, Map<String, String> nodes, String workspace,
 			int uuidBehaviorValue) throws Exception {
 
@@ -136,7 +150,7 @@ public class SiteContentsImportResource implements OperationHandler {
 			session.importXML(path, new ByteArrayInputStream(nodes.get(name).getBytes("UTF-8")), uuidBehaviorValue);
 		}
 		// save at the end
-		// TODO Can there be too much data?
+		// TODO Can there be too much data? Big memory consumption...
 		// TODO Transaction instead of a simple session?
 		session.save();
 
@@ -204,7 +218,12 @@ public class SiteContentsImportResource implements OperationHandler {
 		return uuidBehaviorValue;
 	}
 
-	private ZipContent extractZip(OperationAttachment attachment) {
+	/**
+	 * Extract data from zip
+	 * @param attachment
+	 * @return
+	 */
+	private Map<String, SiteData> extractDataFromZip(OperationAttachment attachment) {
 		if (attachment == null) {
 			throw new OperationException(this.operationName, "No attachment available for Site Content import.");
 		}
@@ -214,47 +233,95 @@ public class SiteContentsImportResource implements OperationHandler {
 			throw new OperationException(this.operationName, "No data stream available for Site Content import.");
 		}
 
-		final NonCloseableZipInputStream zis = new NonCloseableZipInputStream(attachmentInputStream);
-
-		ZipContent zipContent = new ZipContent();
+		Map<String, SiteData> sitesData = new HashMap<String, SiteData>();
 		
-		Map<String, String> nodes = new HashMap<String, String>();
+		final NonCloseableZipInputStream zis = new NonCloseableZipInputStream(attachmentInputStream);
+		
 		try {
 			ZipEntry entry;
 			while ((entry = zis.getNextEntry()) != null) {
 				// Skip directories
-				if (entry.isDirectory())
+				if (entry.isDirectory()) {
 					continue;
+				}
+				String filePath = entry.getName();
 				// Skip empty entries (this allows empty zip files to not cause exceptions).
-				if (entry.getName().equals(""))
+				if (filePath.equals("")) {
 					continue;
-
-				String file = entry.getName();
-				if (file.endsWith(SiteMetaDataExportTask.FILENAME)) {
+				}
+				// Skip entries not in sites/
+				if(!filePath.startsWith(SiteConstants.SITE_CONTENTS_ROOT_PATH)) {
+					continue;
+				}
+								
+				// metadata file ?
+				if (filePath.endsWith(SiteMetaDataExportTask.FILENAME)) {
+					// Unmarshall metadata xml file
 					XStream xstream = new XStream();
 					xstream.alias("metadata", SiteMetaData.class);
 					InputStreamReader isr = new InputStreamReader(zis, "UTF-8");
 					SiteMetaData siteMetadata = (SiteMetaData) xstream.fromXML(isr);
-					zipContent.setSiteMetadata(siteMetadata);
+					
+					String siteName = extractSiteNameFromPath(filePath);
+					
+					// Save unmarshalled metadata
+					SiteData siteData = sitesData.get(siteName);
+					if(siteData == null) {
+						siteData = new SiteData();
+					}
+					siteData.setSiteMetadata(siteMetadata);
+					sitesData.put(siteName, siteData);
 				}
-				if (file.startsWith(SiteConstants.SITE_CONTENTS_ROOT_PATH.substring(1))) {
-					String name = entry.getName();
-					log.info("Collecting the node " + name);
+				// seo file ?
+				else if (filePath.endsWith(SiteSEOExportTask.FILENAME)) {
+					// TODO Process SEO here ?
+				}
+				// sysview file ?
+				else {
+					// Unmarshall sysview xml file to String
+					log.info("Collecting the node " + filePath);
 					String nodeContent = convertStreamToString(zis);
-					nodes.put(name, nodeContent);
+					
+					String siteName = extractSiteNameFromPath(filePath);
+					
+					// Save unmarshalled sysview
+					SiteData siteData = sitesData.get(siteName);
+					if(siteData == null) {
+						siteData = new SiteData();
+					}
+					Map<String, String> siteNodes = siteData.getNodeExportFiles();
+					if(siteNodes == null) {
+						siteNodes = new HashMap<String, String>();
+					}
+					siteNodes.put(filePath, nodeContent);
+					siteData.setNodeExportFiles(siteNodes);
+					sitesData.put(siteName, siteData);
 				}
 			}
-			zipContent.setNodeExportFiles(nodes);
 
 			zis.reallyClose();
 		} catch (IOException e) {
 			throw new OperationException(this.operationName, "Exception when reading the underlying data stream from import.", e);
 		}
 		
-		return zipContent;
+		return sitesData;
 
 	}
 
+	/**
+	 * Extract site name from the file path
+	 * @param path The path of the file
+	 * @return The site name
+	 */
+	private String extractSiteNameFromPath(String path) {
+		String siteName = null;
+		
+		int beginIndex = SiteConstants.SITE_CONTENTS_ROOT_PATH.length() + 1;
+		siteName = path.substring(beginIndex, path.indexOf("/",beginIndex));
+		
+		return siteName;
+	}
+	
 	// Bug in SUN's JDK XMLStreamReader implementation closes the underlying
 	// stream when
 	// it finishes reading an XML document. This is no good when we are using a
@@ -273,7 +340,7 @@ public class SiteContentsImportResource implements OperationHandler {
 			super.close();
 		}
 	}
-
+	
 	public String convertStreamToString(InputStream is) throws IOException {
 
 		if (is != null) {
