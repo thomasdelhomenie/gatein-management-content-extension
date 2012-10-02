@@ -71,11 +71,15 @@ public class SiteContentsImportResource implements OperationHandler {
 
 	private String operationName = null;
 
+	private String importedSiteName = null;
+
 	@Override
 	public void execute(OperationContext operationContext, ResultHandler resultHandler) throws OperationException {
 
 		operationName = operationContext.getOperationName();
 
+		importedSiteName = operationContext.getAddress().resolvePathTemplate("site-name");
+		
 		// "uuidBehavior" attribute
 		int uuidBehaviorValue = extractUuidBehavior(operationContext.getAttributes().getValue("uuidBehavior"));
 
@@ -85,8 +89,8 @@ public class SiteContentsImportResource implements OperationHandler {
 		Map<String, SiteData> sitesData = extractDataFromZip(attachment);
 		
 		// import data of each site
-		for(String siteName : sitesData.keySet()) {
-			SiteData siteData = sitesData.get(siteName);
+		for(String site : sitesData.keySet()) {
+			SiteData siteData = sitesData.get(site);
 			
 			Map<String, String> metaDataOptions = siteData.getSiteMetadata().getOptions();
 			String workspace = metaDataOptions.get("site-workspace");
@@ -253,7 +257,14 @@ public class SiteContentsImportResource implements OperationHandler {
 				if(!filePath.startsWith(SiteConstants.SITE_CONTENTS_ROOT_PATH)) {
 					continue;
 				}
-								
+				
+				String siteName = extractSiteNameFromPath(filePath);
+				
+				// if we are in a site (for example /content/sites/acme), take only the files relative to this site
+				if(importedSiteName != null && !importedSiteName.equals(siteName)) {
+					continue;
+				}
+				
 				// metadata file ?
 				if (filePath.endsWith(SiteMetaDataExportTask.FILENAME)) {
 					// Unmarshall metadata xml file
@@ -261,8 +272,6 @@ public class SiteContentsImportResource implements OperationHandler {
 					xstream.alias("metadata", SiteMetaData.class);
 					InputStreamReader isr = new InputStreamReader(zis, "UTF-8");
 					SiteMetaData siteMetadata = (SiteMetaData) xstream.fromXML(isr);
-					
-					String siteName = extractSiteNameFromPath(filePath);
 					
 					// Save unmarshalled metadata
 					SiteData siteData = sitesData.get(siteName);
@@ -281,8 +290,6 @@ public class SiteContentsImportResource implements OperationHandler {
 					// Unmarshall sysview xml file to String
 					log.info("Collecting the node " + filePath);
 					String nodeContent = convertStreamToString(zis);
-					
-					String siteName = extractSiteNameFromPath(filePath);
 					
 					// Save unmarshalled sysview
 					SiteData siteData = sitesData.get(siteName);
