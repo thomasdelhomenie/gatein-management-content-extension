@@ -11,6 +11,7 @@ import org.exoplatform.management.content.operations.nodetype.NodeTypeExportReso
 import org.exoplatform.management.content.operations.nodetype.NodeTypeImportResource;
 import org.exoplatform.management.content.operations.nodetype.NodeTypeReadResource;
 import org.exoplatform.management.content.operations.queries.QueriesExportResource;
+import org.exoplatform.management.content.operations.queries.QueriesImportResource;
 import org.exoplatform.management.content.operations.queries.QueriesReadResource;
 import org.exoplatform.management.content.operations.script.ScriptExportResource;
 import org.exoplatform.management.content.operations.script.ScriptImportResource;
@@ -41,8 +42,7 @@ import org.gatein.management.spi.ExtensionContext;
 import org.gatein.management.spi.ManagementExtension;
 
 /**
- * @author <a href="mailto:thomas.delhomenie@exoplatform.com">Thomas
- *         Delhoménie</a>
+ * @author <a href="mailto:thomas.delhomenie@exoplatform.com">Thomas Delhoménie</a>
  * @version $Revision$
  */
 public class ContentManagementExtension implements ManagementExtension {
@@ -125,6 +125,7 @@ public class ContentManagementExtension implements ManagementExtension {
         description("Lists available queries"));
     queries.registerOperationHandler(OperationNames.EXPORT_RESOURCE, new QueriesExportResource(),
         description("Exports available queries"));
+    queries.registerOperationHandler(OperationNames.IMPORT_RESOURCE, new QueriesImportResource(), description("Imports queries"));
 
     // /content/taxonomy
     ManagedResource.Registration taxonomies = content.registerSubResource("taxonomy",

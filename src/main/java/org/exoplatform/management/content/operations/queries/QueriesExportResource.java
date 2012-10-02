@@ -1,7 +1,6 @@
 package org.exoplatform.management.content.operations.queries;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import javax.jcr.Node;
@@ -114,7 +113,7 @@ public class QueriesExportResource implements OperationHandler {
 					queryData.setLanguage(query.getLanguage());
 					queryData.setCacheResult(false);
 					// no permissions are set on users' queries
-					queryData.setPermissions(Collections.<String> emptyList());
+					queryData.setPermissions(null);
 
 					ObjectParameter objectParam = new ObjectParameter();
 					objectParam.setName(queryData.getName());
