@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
+import org.exoplatform.management.content.operations.site.SiteUtil;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.gatein.management.api.exceptions.OperationException;
 import org.gatein.management.api.operation.OperationNames;
@@ -19,16 +20,18 @@ public class SiteContentsExportTask implements ExportTask {
   private final RepositoryService repositoryService;
   private final String workspace;
   private final String absolutePath;
+  private final String siteName;
 
-  public SiteContentsExportTask(RepositoryService repositoryService, String workspace, String absolutePath) {
+  public SiteContentsExportTask(RepositoryService repositoryService, String workspace, String siteName, String absolutePath) {
     this.repositoryService = repositoryService;
     this.workspace = workspace;
+    this.siteName = siteName;
     this.absolutePath = absolutePath;
   }
 
   @Override
   public String getEntry() {
-    return "sites/contents-sysview" + absolutePath + ".xml";
+    return SiteUtil.getSiteContentsBasePath(siteName) + absolutePath + ".xml";
   }
 
   @Override

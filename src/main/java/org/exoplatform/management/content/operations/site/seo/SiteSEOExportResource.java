@@ -56,6 +56,6 @@ public class SiteSEOExportResource implements OperationHandler {
 			}
 		}
 
-		return new SiteSEOExportTask(pageMetadataModels);
+		return new SiteSEOExportTask(pageMetadataModels, siteName);
 	}
 }

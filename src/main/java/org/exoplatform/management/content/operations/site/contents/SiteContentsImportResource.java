@@ -43,6 +43,7 @@ import javax.jcr.RepositoryException;
 import javax.jcr.Session;
 
 import org.apache.commons.lang.StringUtils;
+import org.exoplatform.management.content.operations.site.SiteConstants;
 import org.exoplatform.services.jcr.RepositoryService;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
@@ -229,14 +230,14 @@ public class SiteContentsImportResource implements OperationHandler {
 					continue;
 
 				String file = entry.getName();
-				if (file.equals(SiteMetaDataExportTask.FILENAME)) {
+				if (file.endsWith(SiteMetaDataExportTask.FILENAME)) {
 					XStream xstream = new XStream();
 					xstream.alias("metadata", SiteMetaData.class);
 					InputStreamReader isr = new InputStreamReader(zis, "UTF-8");
 					SiteMetaData siteMetadata = (SiteMetaData) xstream.fromXML(isr);
 					zipContent.setSiteMetadata(siteMetadata);
 				}
-				if (file.startsWith("sites/contents-sysview")) {
+				if (file.startsWith(SiteConstants.SITE_CONTENTS_ROOT_PATH.substring(1))) {
 					String name = entry.getName();
 					log.info("Collecting the node " + name);
 					String nodeContent = convertStreamToString(zis);
